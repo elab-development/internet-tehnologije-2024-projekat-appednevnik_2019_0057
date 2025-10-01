@@ -4,7 +4,9 @@ import AppInput from "../components/AppInput";
 import { STUDENTS } from "../data/students";
 
 export default function Students() {
-  const [query, setQuery] = useState("");
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const perPage = 4;
 
   const handleDetails = (u) =>
     alert(`Detalji:\n${u.ime} • ${u.razred} • Prosek: ${u.prosek}`);
@@ -13,10 +15,17 @@ export default function Students() {
   const filtered = useMemo(() => {
     return STUDENTS.filter(
       (u) =>
-        u.ime.toLowerCase().includes(query.toLowerCase()) ||
-        u.razred.toLowerCase().includes(query.toLowerCase())
+        u.ime.toLowerCase().includes(search.toLowerCase()) ||
+        u.razred.toLowerCase().includes(search.toLowerCase())
     );
-  }, [query]);
+  }, [search]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
+  const safePage = Math.min(page, totalPages);
+  const currentPageStudents = useMemo(() => {
+    const startIndex = (safePage - 1) * perPage;
+    return filtered.slice(startIndex, startIndex + perPage);
+  }, [filtered, safePage]);
 
   return (
     <div className="container page">
@@ -26,14 +35,17 @@ export default function Students() {
         <AppInput
           label="Pretraga učenika"
           placeholder="Unesi ime ili razred..."
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          value={search}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setPage(1);
+          }}
         />
       </div>
 
       <div className="grid">
         {filtered.length > 0 ? (
-          filtered.map((u) => (
+          currentPageStudents.map((u) => (
             <AppCard
               key={u.id}
               title={u.ime}
@@ -67,6 +79,28 @@ export default function Students() {
         ) : (
           <p>Nema učenika koji odgovaraju pretrazi.</p>
         )}
+      </div>
+      <div className="pagination">
+        <button
+          disabled={safePage === 1 || filtered.length === 0}
+          onClick={() => setPage((p) => Math.max(1, p - 1))}
+          className="btn"
+        >
+          Prethodna
+        </button>
+
+        <span>
+          Strana {filtered.length === 0 ? 0 : safePage} /{" "}
+          {filtered.length === 0 ? 0 : totalPages}
+        </span>
+
+        <button
+          disabled={safePage === totalPages || filtered.length === 0}
+          onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+          className="btn"
+        >
+          Sledeća
+        </button>
       </div>
     </div>
   );
