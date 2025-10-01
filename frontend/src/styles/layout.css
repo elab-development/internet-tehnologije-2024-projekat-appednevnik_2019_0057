@@ -68,3 +68,58 @@
   justify-content: space-between;
   box-shadow: var(--shadow);
 }
+
+/* Buttons */
+.btn {
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid #0002;
+  background: #fff;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.btn:hover {
+  background: var(--color-accent);
+}
+
+.btn.default {
+  background: #fff;
+}
+
+.btn.primary {
+  background: var(--color-secondary);
+  color: white;
+}
+
+.btn.danger {
+  background: #c0392b;
+  color: white;
+}
+
+/* Inputs */
+.input-wrap {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 1rem;
+}
+
+.input {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #0002;
+  background: #fff;
+}
+
+.input:focus {
+  outline: 2px solid var(--color-secondary);
+}
+
+.input-error {
+  border-color: #c00;
+}
+
+.error-text {
+  color: #c00;
+  font-size: 0.85rem;
+}
