@@ -1,14 +1,19 @@
 import React from "react";
+import { Routes, Route } from "react-router-dom";
 import NavBar from "./components/NavBar";
 import Footer from "./components/Footer";
+import Home from "./pages/Home";
+import NotFound from "./pages/NotFound";
 
 function App() {
   return (
-    <div className="app-shell">
+ <div className="app-shell">
       <NavBar />
-      <main className="app-main container page">
-        <h2>Dobrodošli u e-Dnevnik</h2>
-        <p>Sadrzaj</p>
+      <main className="app-main">
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
       </main>
       <Footer />
     </div>
