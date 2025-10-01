@@ -43,12 +43,6 @@
   text-shadow: 0 1px 3px #0002;
 }
 
-.nav-search {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-}
-
 .icon-btn {
   border: none;
   background: transparent;

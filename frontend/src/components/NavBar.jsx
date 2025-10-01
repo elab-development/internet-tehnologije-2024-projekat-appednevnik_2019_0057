@@ -1,6 +1,5 @@
 import React from "react";
 import { Link, NavLink } from "react-router-dom";
-import { GoSearch } from "react-icons/go";
 
 export default function NavBar() {
   return (
@@ -17,12 +16,6 @@ export default function NavBar() {
         </li>
         <li>
           <NavLink to="/profile">Profil</NavLink>
-        </li>
-        <li className="nav-search">
-          <input type="search" placeholder="Pretraga..." />
-          <button className="icon-btn">
-            <GoSearch />
-          </button>
         </li>
       </ul>
     </nav>
