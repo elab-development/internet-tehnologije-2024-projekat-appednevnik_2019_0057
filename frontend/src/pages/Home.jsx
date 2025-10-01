@@ -1,5 +1,6 @@
 import AppButton from "../components/AppButton";
 import AppInput from "../components/AppInput";
+import AppCard from "../components/AppCard";
 import { useState } from "react";
 
 export default function Home() {
@@ -21,6 +22,16 @@ export default function Home() {
       <AppButton variant="primary" onClick={() => alert(`Uneto: ${value}`)}>
         Pošalji
       </AppButton>
+      
+      <AppCard
+        title="Primer kartice"
+        actions={[
+          { label: "Detalji", variant: "primary", onClick: () => alert("Klik na detalje") },
+          { label: "Obriši", variant: "danger", onClick: () => alert("Klik na obriši") }
+        ]}
+      >
+        <p>Kartica</p>
+      </AppCard>
     </section>
   );
 }
