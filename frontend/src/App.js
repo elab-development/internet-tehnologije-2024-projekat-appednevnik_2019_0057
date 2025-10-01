@@ -3,6 +3,7 @@ import { Routes, Route } from "react-router-dom";
 import NavBar from "./components/NavBar";
 import Footer from "./components/Footer";
 import Breadcrumbs from "./components/Breadcrumbs";
+import Students from "./pages/Students";
 import Home from "./pages/Home";
 import NotFound from "./pages/NotFound";
 
@@ -20,6 +21,7 @@ function App() {
       <main className="app-main">
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/students" element={<Students />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
