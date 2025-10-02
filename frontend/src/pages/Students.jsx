@@ -1,16 +1,14 @@
 import { useState, useMemo } from "react";
 import AppCard from "../components/AppCard";
 import AppInput from "../components/AppInput";
+import AppModal from "../components/AppModal";
 import { STUDENTS } from "../data/students";
 
 export default function Students() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [selectedStudent, setSelectedStudent] = useState(null);
   const perPage = 4;
-
-  const handleDetails = (u) =>
-    alert(`Detalji:\n${u.ime} • ${u.razred} • Prosek: ${u.prosek}`);
-  const handleMessage = (u) => alert(`Poruka poslata: ${u.email}`);
 
   const filtered = useMemo(() => {
     return STUDENTS.filter(
@@ -53,12 +51,12 @@ export default function Students() {
                 {
                   label: "Detalji",
                   variant: "primary",
-                  onClick: () => handleDetails(u),
+                  onClick: () => setSelectedStudent(u),
                 },
                 {
                   label: "Poruka",
                   variant: "default",
-                  onClick: () => handleMessage(u),
+                  onClick: () => alert(`Poruka poslata: ${u.email}`),
                 },
               ]}
             >
@@ -102,6 +100,29 @@ export default function Students() {
           Sledeća
         </button>
       </div>
+
+      <AppModal
+        open={!!selectedStudent}
+        onClose={() => setSelectedStudent(null)}
+        title={selectedStudent?.ime}
+      >
+        {selectedStudent && (
+          <>
+            <p>
+              <strong>Razred:</strong> {selectedStudent.razred}
+            </p>
+            <p>
+              <strong>Prosek:</strong> {selectedStudent.prosek.toFixed(2)}
+            </p>
+            <p>
+              <strong>Email:</strong> {selectedStudent.email}
+            </p>
+            <p>
+              <strong>Telefon:</strong> {selectedStudent.telefon}
+            </p>
+          </>
+        )}
+      </AppModal>
     </div>
   );
 }
