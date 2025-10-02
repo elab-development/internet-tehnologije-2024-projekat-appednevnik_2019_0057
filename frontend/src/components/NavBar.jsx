@@ -7,9 +7,7 @@ export default function NavBar() {
       <h1 className="brand">e-Dnevnik</h1>
       <ul className="nav">
         <li>
-          <NavLink to="/" end>
-            Početna
-          </NavLink>
+          <NavLink to="/home">Početna</NavLink>
         </li>
         <li>
           <NavLink to="/students">Učenici</NavLink>
