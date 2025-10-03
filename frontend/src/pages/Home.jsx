@@ -75,6 +75,9 @@ export default function Home() {
           </AppCard>
         ))}
       </div>
+     
+     {(user?.role === "nastavnik" || user?.role === "admin") && (
+        <>
       <h3 style={{ marginTop: "1.25rem" }}>Statistika</h3>
       <div className="stats-grid">
         <div className="stat">
@@ -90,6 +93,8 @@ export default function Home() {
           <div className="stat-value">{stats.gradesCount}</div>
         </div>
       </div>
+      </>
+      )}
     </section>
   );
 }

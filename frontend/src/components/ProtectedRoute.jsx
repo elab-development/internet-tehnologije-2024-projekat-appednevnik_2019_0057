@@ -1,7 +1,14 @@
 import { Navigate } from "react-router-dom";
 import { useLocalStorage } from "../hooks/useLocalStorage";
 
-export default function RequireAuth({ children }) {
+export default function ProtectedRoute({ children, allowedRoles }) {
   const [user] = useLocalStorage("user", null);
-  return user ? children : <Navigate to="/login" replace />;
+  if (!user) return <Navigate to="/login" replace />;
+
+  if (Array.isArray(allowedRoles) && allowedRoles.length > 0) {
+    if (!allowedRoles.includes(user.role))
+      return <Navigate to="/home" replace />;
+  }
+
+  return children;
 }

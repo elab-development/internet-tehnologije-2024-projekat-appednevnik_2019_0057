@@ -61,6 +61,18 @@
   align-items: center;
   justify-content: space-between;
   box-shadow: var(--shadow);
+  margin-top: auto;
+}
+
+.app-shell {
+  min-height: 100vh;           
+  display: flex;
+  flex-direction: column;      
+}
+
+.app-main {
+  flex: 1;                     
+  padding: 24px;
 }
 
 /* Buttons */

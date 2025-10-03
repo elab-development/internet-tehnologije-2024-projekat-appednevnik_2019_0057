@@ -36,7 +36,7 @@ function App() {
           <Route path="/" element={user ? <Navigate to="/home" replace /> : <Navigate to="/login" replace />}/>
           <Route path="/login" element={<GuestRoute><Login /> </GuestRoute>} />
           <Route path="/home" element={<ProtectedRoute> <Home /> </ProtectedRoute> } />
-          <Route path="/students" element={<ProtectedRoute> <Students /> </ProtectedRoute> } />
+          <Route path="/students" element={<ProtectedRoute allowedRoles={["nastavnik", "admin"]}> <Students /> </ProtectedRoute> } />
           <Route path="/profile" element={<ProtectedRoute> <Profile /></ProtectedRoute> } />
           <Route path="*" element={<NotFound />} />
         </Routes>
