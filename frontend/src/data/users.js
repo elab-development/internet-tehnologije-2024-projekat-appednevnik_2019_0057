@@ -1,0 +1,38 @@
+export const USERS = [
+  {
+    id: 1,
+    username: "nastavnik1",
+    password: "1234",
+    role: "nastavnik",
+    name: "Marko Jovanović",
+    email: "marko.jovanovic@skola.rs",
+    telefon: "+381 64 111 2223",
+  },
+  {
+    id: 2,
+    username: "roditelj1",
+    password: "1234",
+    role: "roditelj",
+    name: "Jelena Petrović",
+    email: "jelena.petrovic.roditelj@skola.rs",
+    telefon: "+381 63 555 6677",
+  },
+  {
+    id: 3,
+    username: "ucenik1",
+    password: "1234",
+    role: "ucenik",
+    name: "Marko Marković",
+    email: "marko.markovic.ucenik@skola.rs",
+    telefon: "+381 60 999 0001",
+  },
+  {
+    id: 4,
+    username: "admin1",
+    password: "1234",
+    role: "admin",
+    name: "Admin Korisnik",
+    email: "admin@skola.rs",
+    telefon: "+381 11 123 4567",
+  },
+];
