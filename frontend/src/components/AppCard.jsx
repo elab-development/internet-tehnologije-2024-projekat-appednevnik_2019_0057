@@ -1,9 +1,9 @@
 import React from "react";
 import AppButton from "./AppButton";
 
-export default function AppCard({ title, children, actions }) {
+export default function AppCard({ title, children, actions, className = "" }) {
   return (
-    <div className="card">
+    <div className={`card ${className}`}>
       {title && <h3 className="card-title">{title}</h3>}
       <div className="card-body">{children}</div>
       {actions && (

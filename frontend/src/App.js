@@ -11,8 +11,12 @@ import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 import GuestRoute from "./components/GuestRoute";
 import { useLocalStorage } from "./hooks/useLocalStorage";
+import { useEffect } from "react";
 
 function App() {
+    useEffect(() => {
+      document.title = "e-Dnevnik";
+    }, []);
   const [user] = useLocalStorage("user", null);
 
   return (
