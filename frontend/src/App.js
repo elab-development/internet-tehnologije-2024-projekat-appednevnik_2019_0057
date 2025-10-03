@@ -14,9 +14,10 @@ import { useLocalStorage } from "./hooks/useLocalStorage";
 import { useEffect } from "react";
 
 function App() {
-    useEffect(() => {
-      document.title = "e-Dnevnik";
-    }, []);
+  useEffect(() => {
+    document.title = "e-Dnevnik";
+  }, []);
+
   const [user] = useLocalStorage("user", null);
 
   return (
