@@ -4,6 +4,7 @@ import NavBar from "./components/NavBar";
 import Footer from "./components/Footer";
 import Breadcrumbs from "./components/Breadcrumbs";
 import Students from "./pages/Students";
+import Student from "./pages/Student";
 import Login from "./pages/Login";
 import Profile from "./pages/Profile";
 import Home from "./pages/Home";
@@ -39,8 +40,9 @@ function App() {
           <Route path="/login" element={<GuestRoute><Login /> </GuestRoute>} />
           <Route path="/home" element={<ProtectedRoute> <Home /> </ProtectedRoute> } />
           <Route path="/students" element={<ProtectedRoute allowedRoles={["nastavnik", "admin"]}> <Students /> </ProtectedRoute> } />
-          <Route path="/profile" element={<ProtectedRoute> <Profile /></ProtectedRoute> } />
+          <Route path="/student" element={ <ProtectedRoute allowedRoles={["ucenik", "roditelj"]}> <Student /> </ProtectedRoute> } />
           <Route path="/subjects" element={<ProtectedRoute allowedRoles={["admin"]}> <Subjects /> </ProtectedRoute> } />
+          <Route path="/profile" element={<ProtectedRoute> <Profile /></ProtectedRoute> } />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>

@@ -7,6 +7,7 @@ export default function NavBar() {
   const user = JSON.parse(localStorage.getItem("user") || "null");
   const role = String(user?.role || "").trim().toLowerCase();
   const canSeeStudents = role === "nastavnik" || role === "admin";
+  const canSeeStudent = role === "ucenik" || role === "roditelj"
   const isAdmin = role === "admin";
 
   if (pathname === "/login") {
@@ -25,10 +26,13 @@ export default function NavBar() {
         {canSeeStudents && (
           <li><NavLink to="/students">Učenici</NavLink></li>
         )}
-        <li> <NavLink to="/profile">Profil</NavLink></li>
+        {canSeeStudent && (
+          <li><NavLink to="/student">Učenik</NavLink></li>
+        )}
         {isAdmin && (
           <li><NavLink to="/subjects">Predmeti</NavLink></li>
         )}
+        <li> <NavLink to="/profile">Profil</NavLink></li>
       </ul>
     </nav>
   );

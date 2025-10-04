@@ -13,6 +13,8 @@ export default function Profile() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
+  const isStudent = user?.role === "ucenik";
+
   const validateEmail = (val) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
   };
@@ -73,41 +75,62 @@ export default function Profile() {
           </div>
         </div>
 
-        <div className="card">
-          <h3 className="card-title">Kontakt</h3>
-          <div className="card-body">
-            <AppInput
-              label="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              error={error}
-            />
-            <AppInput
-              label="Telefon"
-              value={telefon}
-              onChange={(e) => setTelefon(e.target.value)}
-            />
+        {isStudent ? (
+          <>
+            <div className="card">
+              <h3 className="card-title">Kontakt</h3>
+              <div className="card-body">
+                <div className="input-wrap">
+                  <label>Email</label>
+                  <input className="input" value={user.email} readOnly />
+                </div>
 
-            <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-              <AppButton variant="primary" onClick={handleSave}>
-                Sačuvaj
-              </AppButton>
-              <AppButton
-                variant="default"
-                onClick={() => {
-                  setEmail(user.email || "");
-                  setTelefon(user.telefon || "");
-                }}
-              >
-                Poništi promene
-              </AppButton>
+                <div className="input-wrap" style={{ marginTop: 12 }}>
+                  <label>Telefon</label>
+                  <input className="input" value={user.telefon} readOnly />
+                </div>
+              </div>
             </div>
+          </>
+        ) : (
+          <>
+            <div className="card">
+              <h3 className="card-title">Kontakt</h3>
+              <div className="card-body">
+                <AppInput
+                  label="Email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  error={error}
+                />
+                <AppInput
+                  label="Telefon"
+                  value={telefon}
+                  onChange={(e) => setTelefon(e.target.value)}
+                />
 
-            {message && (
-              <p style={{ color: "green", marginTop: 10 }}>{message}</p>
-            )}
-          </div>
-        </div>
+                <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
+                  <AppButton variant="primary" onClick={handleSave}>
+                    Sačuvaj
+                  </AppButton>
+                  <AppButton
+                    variant="default"
+                    onClick={() => {
+                      setEmail(user.email || "");
+                      setTelefon(user.telefon || "");
+                    }}
+                  >
+                    Poništi promene
+                  </AppButton>
+                </div>
+
+                {message && (
+                  <p style={{ color: "green", marginTop: 10 }}>{message}</p>
+                )}
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       <AppButton variant="danger" onClick={handleLogout}>
