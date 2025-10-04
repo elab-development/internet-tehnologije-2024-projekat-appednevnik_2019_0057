@@ -1,7 +1,8 @@
 import AppCard from "../components/AppCard";
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useLocalStorage } from "../hooks/useLocalStorage";
 import { STUDENTS } from "../data/students";
+import { DEFAULT_GRADES_MAP } from "../data/grades";
 
 const OBAVESTENJA = [
   {
@@ -33,8 +34,11 @@ const tipToClass = {
   danger: "card-danger",
 };
 
+const LS_GRADES = "grades";
+
 export default function Home() {
   const [user] = useLocalStorage("user", null);
+  const [gradesMap, setGradesMap] = useState({});
 
   const today = new Date().toLocaleDateString("sr-RS", {
     day: "2-digit",
@@ -42,18 +46,49 @@ export default function Home() {
     year: "numeric",
   });
 
+  useEffect(() => {
+    const load = () => {
+      try {
+       const raw = localStorage.getItem(LS_GRADES);
+       setGradesMap(raw ? JSON.parse(raw) : DEFAULT_GRADES_MAP);
+      } catch {
+        setGradesMap({});
+      }
+    };
+
+    load();
+
+    const onStorage = (e) => {
+      if (e.key === LS_GRADES) {
+       load();
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+
   const stats = useMemo(() => {
     const total = STUDENTS.length;
-    const avg = total
-      ? STUDENTS.reduce((sum, u) => sum + u.prosek, 0) / total
-      : 0;
+    let sum = 0;
+    let count = 0;
+
+    STUDENTS.forEach((u) => {
+      const gs = gradesMap[String(u.id)] || [];
+      if (gs.length) {
+        sum += gs.reduce((acc, g) => acc + Number(g.ocena || 0), 0);
+        count += gs.length;
+      }
+    });
+
+    const avg = count > 0 ? (sum / count) : 0;
     const gradesCount = new Set(STUDENTS.map((u) => u.razred)).size;
+
     return {
       total,
       avg: avg.toFixed(2),
       gradesCount,
     };
-  }, []);
+  }, [gradesMap]);
 
   return (
     <section className="container page">

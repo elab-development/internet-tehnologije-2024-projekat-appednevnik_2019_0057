@@ -10,6 +10,7 @@ import Home from "./pages/Home";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 import GuestRoute from "./components/GuestRoute";
+import Subjects from "./pages/Subjects";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import { useEffect } from "react";
 
@@ -39,6 +40,7 @@ function App() {
           <Route path="/home" element={<ProtectedRoute> <Home /> </ProtectedRoute> } />
           <Route path="/students" element={<ProtectedRoute allowedRoles={["nastavnik", "admin"]}> <Students /> </ProtectedRoute> } />
           <Route path="/profile" element={<ProtectedRoute> <Profile /></ProtectedRoute> } />
+          <Route path="/subjects" element={<ProtectedRoute allowedRoles={["admin"]}> <Subjects /> </ProtectedRoute> } />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>

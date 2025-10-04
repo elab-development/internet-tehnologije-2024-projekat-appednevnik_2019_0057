@@ -255,3 +255,22 @@
   font-weight: 700;
   margin-top: 4px;
 }
+
+.card p strong { color: var(--ink); }
+
+/* Dodaj predmet */
+.inline-form {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;      
+  flex-wrap: wrap;            
+}
+
+.inline-form .input-wrap {
+  margin-bottom: 0;
+}
+
+.inline-form .btn {
+  height: 38px;               
+  padding: 0 12px;            
+}

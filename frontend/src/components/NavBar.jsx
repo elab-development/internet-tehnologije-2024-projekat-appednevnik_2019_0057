@@ -7,6 +7,7 @@ export default function NavBar() {
   const user = JSON.parse(localStorage.getItem("user") || "null");
   const role = String(user?.role || "").trim().toLowerCase();
   const canSeeStudents = role === "nastavnik" || role === "admin";
+  const isAdmin = role === "admin";
 
   if (pathname === "/login") {
     return (
@@ -25,6 +26,9 @@ export default function NavBar() {
           <li><NavLink to="/students">Učenici</NavLink></li>
         )}
         <li> <NavLink to="/profile">Profil</NavLink></li>
+        {isAdmin && (
+          <li><NavLink to="/subjects">Predmeti</NavLink></li>
+        )}
       </ul>
     </nav>
   );

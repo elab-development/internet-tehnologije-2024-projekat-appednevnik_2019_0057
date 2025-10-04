@@ -11,6 +11,10 @@ const ROUTE_MAP = {
     { href: "/", label: "Početna" },
     { href: "/profile", label: "Profil" },
   ],
+  "/subjects": [
+    { href: "/", label: "Početna" },
+    { href: "/subjects", label: "Predmeti" },
+  ],
   "/login": [
     { href: "/", label: "Početna" },
     { href: "/login", label: "Prijava" },
