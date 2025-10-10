@@ -16,6 +16,8 @@ return new class extends Migration
             $table->string('ime');
             $table->string('email')->unique();
             $table->string('telefon')->nullable();
+
+            $table->foreignId('user_id')->unique()->constrained()->cascadeOnDelete();
             $table->timestamps();
         });
     }

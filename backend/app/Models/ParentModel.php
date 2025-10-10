@@ -10,7 +10,12 @@ class ParentModel extends Model
     use HasFactory;
 
     protected $table = 'parent_models';
-    protected $fillable = ['ime', 'email', 'telefon'];
+    protected $fillable = ['user_id', 'ime', 'email', 'telefon'];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 
     public function students()
     {

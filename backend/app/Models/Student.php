@@ -8,9 +8,14 @@ use Illuminate\Database\Eloquent\Model;
 class Student extends Model
 {
     use HasFactory;
-    
+
     protected $table = 'students';
-    protected $fillable = ['ime', 'razred', 'email', 'telefon', 'parent_model_id'];
+    protected $fillable = ['user_id', 'ime', 'razred', 'email', 'telefon', 'parent_model_id'];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 
     public function parent()
     {

@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->string('telefon')->nullable();
 
+            $table->foreignId('user_id')->unique()->constrained()->cascadeOnDelete();
             $table->foreignId('parent_model_id')
                 ->constrained('parent_models')
                 ->cascadeOnUpdate()
