@@ -24,9 +24,8 @@ return new class extends Migration
                 ->cascadeOnUpdate()
                 ->restrictOnDelete();
 
-            $table->tinyInteger('vrednost');
+            $table->tinyInteger('ocena');
             $table->date('datum')->nullable();
-            $table->text('napomena')->nullable();
 
             $table->timestamps();
 

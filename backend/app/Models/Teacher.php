@@ -10,7 +10,7 @@ class Teacher extends Model
     use HasFactory;
 
     protected $table = 'teachers';
-    protected $fillable = ['user_id', 'ime', 'email', 'telefon', 'subject_id'];
+    protected $fillable = ['user_id', 'telefon', 'subject_id'];
 
     public function user()
     {
