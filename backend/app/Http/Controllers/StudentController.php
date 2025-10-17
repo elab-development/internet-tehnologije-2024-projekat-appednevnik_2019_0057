@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\ParentModel;
 use App\Models\Student;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -56,6 +57,18 @@ class StudentController extends Controller
      */
     public function update(Request $request, Student $student)
     {
+        $user = $request->user();
+        if (!$user) {
+            return response()->json(['message' => 'Unauthenticated.'], 401);
+        }
+
+        if (strtolower($user->role) === 'roditelj') {
+            $parent = ParentModel::where('user_id', $user->id)->first();
+            if (!$parent || $student->parent_model_id !== $parent->id) {
+                return response()->json(['message' => 'Forbidden.'], 403);
+            }
+        }
+
         $v = Validator::make($request->all(), [
             'email'   => 'nullable|email|unique:users,email,' . $student->user_id,
             'telefon' => 'nullable|string|max:30',

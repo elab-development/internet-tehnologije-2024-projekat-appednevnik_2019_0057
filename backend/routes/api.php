@@ -23,10 +23,11 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
 Route::group(['middleware'=>['auth:sanctum']], function(){
+    Route::put('/students/{student}', [StudentController::class, 'update'])->middleware('role:roditelj');
     Route::post('/logout', [AuthController::class, 'logout']);
 });
 
-Route::apiResource('students', StudentController::class)->only(['index','show','update']);
+//Route::apiResource('students', StudentController::class)->only(['index','show','update']);
 Route::get('students/{student}/grades', [GradeController::class, 'byStudent']);
 
 Route::apiResource('parents', ParentModelController::class)->only(['index', 'show', 'update']);
