@@ -27,9 +27,20 @@ class GradeController extends Controller
      */
     public function store(Request $request)
     {
+        $user = $request->user();
+
+        if (!$user || strtolower($user->role) !== 'nastavnik') {
+            return response()->json(['message' => 'Samo nastavnici mogu da unose ocene.'], 403);
+        }
+
+        $teacher = $user->teacher;
+
+        if (!$teacher) {
+            return response()->json(['message' => 'Nastavnik nije pronadjen.'], 403);
+        }
+
         $v = Validator::make($request->all(), [
             'student_id' => 'required|exists:students,id',
-            'teacher_id' => 'required|exists:teachers,id',
             'ocena' => 'required|integer|min:1|max:5',
             'datum' => 'nullable|date',
         ]);
@@ -40,7 +51,7 @@ class GradeController extends Controller
 
         $grade = Grade::create([
             'student_id' => $request->student_id,
-            'teacher_id' => $request->teacher_id,
+            'teacher_id' => $teacher->id,
             'ocena' => $request->ocena,
             'datum' => $request->datum ?? now()->toDateString(),
         ]);
