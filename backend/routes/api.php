@@ -24,19 +24,21 @@ Route::post('/login', [AuthController::class, 'login']);
 
 Route::group(['middleware'=>['auth:sanctum']], function(){
     Route::put('/students/{student}', [StudentController::class, 'update'])->middleware('role:roditelj');
+    Route::apiResource('students', StudentController::class)->only(['index','show']);
+
+    Route::apiResource('parents', ParentModelController::class)->only(['index', 'show', 'update']);
+
+    Route::apiResource('teachers', TeacherController::class)->only(['index','show','update']);
+
+    Route::apiResource('subjects', SubjectController::class);
+
+    Route::apiResource('grades', GradeController::class)->only(['index', 'show', 'store']);
+
+    Route::get('students/{student}/grades', [GradeController::class, 'byStudent']);
+
+
     Route::post('/logout', [AuthController::class, 'logout']);
 });
-
-//Route::apiResource('students', StudentController::class)->only(['index','show','update']);
-Route::get('students/{student}/grades', [GradeController::class, 'byStudent']);
-
-Route::apiResource('parents', ParentModelController::class)->only(['index', 'show', 'update']);
-
-Route::apiResource('teachers', TeacherController::class)->only(['index','show','update']);
-
-Route::apiResource('subjects', SubjectController::class);
-
-Route::apiResource('grades', GradeController::class)->only(['index', 'show', 'store']);
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();

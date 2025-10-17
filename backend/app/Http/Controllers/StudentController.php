@@ -59,14 +59,16 @@ class StudentController extends Controller
     {
         $user = $request->user();
         if (!$user) {
-            return response()->json(['message' => 'Unauthenticated.'], 401);
+            return response()->json(['message' => 'Niste prijavljeni.'], 401);
         }
 
         if (strtolower($user->role) === 'roditelj') {
             $parent = ParentModel::where('user_id', $user->id)->first();
             if (!$parent || $student->parent_model_id !== $parent->id) {
-                return response()->json(['message' => 'Forbidden.'], 403);
+                return response()->json(['message' => 'Ne mozete menjati podatke ovog ucenika.'], 403);
             }
+        } elseif (strtolower($user->role)  !== 'admin') {
+            return response()->json(['message' => 'Nemate dozvolu za ovu akciju.'], 403);
         }
 
         $v = Validator::make($request->all(), [
