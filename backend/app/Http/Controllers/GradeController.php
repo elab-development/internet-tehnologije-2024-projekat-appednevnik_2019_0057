@@ -15,6 +15,10 @@ class GradeController extends Controller
      */
     public function index(Request $request)
     {
+        $user = $request->user();
+        if (!$user || strtolower($user->role) !== 'admin' && strtolower($user->role) !== 'nastavnik') {
+            return response()->json(['message' => 'Zabranjen pristup.'], 403);
+        }
         $grades = Grade::with(['student', 'teacher', 'teacher.subject'])
             ->orderBy('id', 'desc')
             ->paginate($request->query('per_page', 10));

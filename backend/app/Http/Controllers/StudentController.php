@@ -15,6 +15,11 @@ class StudentController extends Controller
      */
     public function index(Request $request)
     {
+        $user = $request->user();
+        if (!$user || strtolower($user->role) !== 'admin' && strtolower($user->role) !== 'nastavnik') {
+            return response()->json(['message' => 'Zabranjen pristup.'], 403);
+        }
+
         $q = $request->query('q');
         $perPage = $request->query('per_page', 10);
 

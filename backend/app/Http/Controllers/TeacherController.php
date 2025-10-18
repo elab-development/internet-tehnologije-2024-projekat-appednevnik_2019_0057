@@ -43,7 +43,12 @@ class TeacherController extends Controller
      */
     public function update(Request $request, Teacher $teacher)
     {
-       $v = Validator::make($request->all(), [
+        $user = $request->user();
+        if (!$user || strtolower($user->role) !== 'nastavnik' && strtolower($user->role) !== 'admin') {
+            return response()->json(['message' => 'Nemate dozvolu za ovu akciju.'], 403);
+        }
+
+        $v = Validator::make($request->all(), [
             'email'   => 'nullable|email|unique:users,email,' . $teacher->user_id,
             'telefon' => 'nullable|string|max:30',
         ]);

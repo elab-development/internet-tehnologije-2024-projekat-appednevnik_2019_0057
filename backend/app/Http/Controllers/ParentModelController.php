@@ -14,6 +14,11 @@ class ParentModelController extends Controller
      */
     public function index(Request $request)
     {
+        $user = $request->user();
+        if (!$user || strtolower($user->role) !== 'admin' && strtolower($user->role) !== 'nastavnik') {
+            return response()->json(['message' => 'Zabranjen pristup.'], 403);
+        }
+
         $parents = ParentModel::with('students', 'user:id,name,email,role')
             ->orderBy('id')
             ->paginate($request->query('per_page', 10));
@@ -48,6 +53,11 @@ class ParentModelController extends Controller
      */
     public function update(Request $request, ParentModel $parent)
     {
+        $user = $request->user();
+        if (!$user || strtolower($user->role) !== 'admin' && strtolower($user->role) !== 'roditelj') {
+            return response()->json(['message' => 'Nemate dozvolu za ovu akciju.'], 403);
+        }
+
         $v = Validator::make($request->all(), [
             'email'   => 'sometimes|email|max:255',
             'telefon' => 'sometimes|string|max:50',
@@ -57,7 +67,7 @@ class ParentModelController extends Controller
             return response()->json(['errors' => $v->errors()], 422);
         }
 
-        
+
         if ($request->filled('email')) {
             $parent->user()->update(['email' => $request->email]);
         }

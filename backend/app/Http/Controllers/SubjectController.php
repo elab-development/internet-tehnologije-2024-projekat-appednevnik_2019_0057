@@ -29,6 +29,11 @@ class SubjectController extends Controller
      */
     public function store(Request $request)
     {
+        $user = $request->user();
+        if (!$user || strtolower($user->role) !== 'admin') {
+            return response()->json(['message' => 'Samo admin može da dodaje predmete.'], 403);
+        }
+
         $v = Validator::make($request->all(), [
             'naziv' => 'required|string|max:255|unique:subjects,naziv',
         ]);
@@ -54,6 +59,11 @@ class SubjectController extends Controller
      */
     public function update(Request $request, Subject $subject)
     {
+        $user = $request->user();
+        if (!$user || strtolower($user->role) !== 'admin') {
+            return response()->json(['message' => 'Samo admin može da menja predmete.'], 403);
+        }
+
         $v = Validator::make($request->all(), [
             'naziv' => 'required|string|max:255|unique:subjects,naziv,' . $subject->id,
         ]);
@@ -72,8 +82,13 @@ class SubjectController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Subject $subject)
+    public function destroy(Request $request, Subject $subject)
     {
+        $user = $request->user();
+        if (!$user || strtolower($user->role) !== 'admin') {
+            return response()->json(['message' => 'Samo admin može da briše predmete.'], 403);
+        }
+
         $subject->delete();
         return response()->json(['message' => 'Predmet obrisan.']);
     }
