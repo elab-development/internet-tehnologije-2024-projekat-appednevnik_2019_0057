@@ -2,40 +2,60 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AppInput from "../components/AppInput";
 import AppButton from "../components/AppButton";
-import { useLocalStorage } from "../hooks/useLocalStorage";
-import { USERS } from "../data/users";
+import api, { setAuthToken } from "../api/axios";
 
 export default function Login() {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [, setUser] = useLocalStorage("user", null);
+  const [msg, setMsg] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  async function handleSubmit(e) {
     e.preventDefault();
+    setError("");
+    setMsg("");
+    setLoading(true);
+    try {
+      const res = await api.post("/login", { email, password });
+      const token = res.data.access_token;
+      if (!token) throw new Error("Nije vraćen token.");
 
-    const found = USERS.find(
-      (u) => u.username === username.trim() && u.password === password.trim()
-    );
+      localStorage.setItem("token", token);
+      setAuthToken(token);
 
-    if (!found) {
-      setError("Pogrešno korisničko ime ili lozinka");
-      return;
+      if (res.data.user) {
+        localStorage.setItem("user", JSON.stringify(res.data.user));
+      }
+
+      setMsg(res.data.message || "Uspešna prijava.");
+      navigate("/home", { replace: true });
+    } catch (e) {
+      const be = e?.response?.data;
+      const beMsg = be?.message || be?.error || "Neuspešna prijava.";
+      setError(beMsg);
+    } finally {
+      setLoading(false);
     }
-
-    setUser(found);
-    navigate("/home");
-  };
+  }
 
   return (
     <div className="container page">
       <h1>Prijava</h1>
+
+      {error && (
+        <p className="error-text" style={{ marginBottom: 8 }}>
+          {error}
+        </p>
+      )}
+      {msg && <p style={{ color: "green", marginBottom: 8 }}>{msg}</p>}
+
       <form onSubmit={handleSubmit}>
         <AppInput
           label="Korisničko ime"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
         />
         <AppInput
           label="Lozinka"
@@ -45,7 +65,7 @@ export default function Login() {
         />
         {error && <p className="error-text">{error}</p>}
         <AppButton type="submit" variant="primary">
-          Prijavi se
+          {loading ? "Prijava..." : "Prijavi se"}
         </AppButton>
       </form>
     </div>

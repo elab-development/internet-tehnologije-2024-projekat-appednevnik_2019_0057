@@ -85,8 +85,8 @@ class AuthController extends Controller
             if ($user->role === 'nastavnik') {
                 Teacher::create([
                     'user_id'    => $user->id,
-                    'subject_id' => $request->subject_id,  
-                    'telefon'    => $request->telefon,    
+                    'subject_id' => $request->subject_id,
+                    'telefon'    => $request->telefon,
                 ]);
             }
 
@@ -111,7 +111,12 @@ class AuthController extends Controller
         $user = User::where('email', $request['email'])->firstOrFail();
 
         $token = $user->createToken('authenticationToken')->plainTextToken;
-        return response()->json(['message' => 'Dobrodosli ' . $user->name . '!', 'access_token' => $token, 'token_type' => 'Bearer']);
+        return response()->json([
+            'message' => 'Dobrodošli ' . $user->name . '!',
+            'access_token' => $token,
+            'token_type' => 'Bearer',
+            'user' => $user->only(['id', 'name', 'email', 'role']),
+        ]);
     }
 
     public function logout(Request $request)
