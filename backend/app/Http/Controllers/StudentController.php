@@ -111,4 +111,15 @@ class StudentController extends Controller
     {
         //
     }
+
+    public function indexFreeStudents()
+{
+    // učenici koji nemaju roditelja
+    $students = \App\Models\Student::with(['user:id,name,email'])
+        ->whereNull('parent_model_id')
+        ->orderBy('id')
+        ->get(['id', 'user_id', 'razred', 'telefon', 'parent_model_id']);
+
+    return response()->json($students);
+}
 }

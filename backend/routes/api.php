@@ -23,6 +23,9 @@ use Illuminate\Support\Facades\Route;
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
+Route::get('subjects', [SubjectController::class, 'index']);
+Route::get('public/students-free', [StudentController::class, 'indexFreeStudents']);
+
 Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::put('/students/{student}', [StudentController::class, 'update']);
     Route::apiResource('students', StudentController::class)->only(['index', 'show']);
@@ -31,7 +34,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
 
     Route::apiResource('teachers', TeacherController::class)->only(['index', 'show', 'update']);
 
-    Route::apiResource('subjects', SubjectController::class);
+    Route::apiResource('subjects', SubjectController::class)->only(['show', 'store', 'update', 'destroy']);
 
     Route::apiResource('grades', GradeController::class)->only(['index', 'show', 'store']);
 

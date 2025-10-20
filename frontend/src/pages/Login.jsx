@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import AppInput from "../components/AppInput";
 import AppButton from "../components/AppButton";
 import api, { setAuthToken } from "../api/axios";
@@ -45,7 +45,10 @@ export default function Login() {
       <h1>Prijava</h1>
 
       {error && (
-        <p className="error-text" style={{ marginBottom: 8 }}> {error} </p>
+        <p className="error-text" style={{ marginBottom: 8 }}>
+          {" "}
+          {error}{" "}
+        </p>
       )}
       {msg && <p style={{ color: "green", marginBottom: 8 }}>{msg}</p>}
 
@@ -65,6 +68,9 @@ export default function Login() {
           {loading ? "Prijava..." : "Prijavi se"}
         </AppButton>
       </form>
+      <p style={{ marginTop: 12 }}>
+        Nemate nalog? <Link to="/register">Registrujte se</Link>
+      </p>
     </div>
   );
 }

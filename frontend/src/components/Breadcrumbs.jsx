@@ -32,6 +32,10 @@ export default function Breadcrumbs() {
       { href: "/subjects", label: "Predmeti" },
     ],
     "/login": [{ href: "/login", label: "Prijava" }],
+    "/register": [
+      { href: "/login", label: "Prijava" },
+      { href: "/register", label: "Registracija" },
+    ],
   };
 
   const clean = pathname.replace(/\/+$/, "") || "/";

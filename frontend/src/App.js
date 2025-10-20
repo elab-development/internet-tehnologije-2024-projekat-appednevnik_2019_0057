@@ -12,6 +12,7 @@ import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/ProtectedRoute";
 import GuestRoute from "./components/GuestRoute";
 import Subjects from "./pages/Subjects";
+import Register from "./pages/Register";
 import { useLocalStorage } from "./hooks/useLocalStorage";
 import { useEffect } from "react";
 import api, { setAuthToken } from "./api/axios";
@@ -105,6 +106,14 @@ function App() {
                 {" "}
                 <Profile />
               </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/register"
+            element={
+              <GuestRoute>
+                <Register />
+              </GuestRoute>
             }
           />
           <Route path="*" element={<NotFound />} />
