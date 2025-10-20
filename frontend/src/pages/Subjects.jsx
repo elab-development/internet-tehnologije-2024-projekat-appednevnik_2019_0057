@@ -124,6 +124,9 @@ export default function Subjects() {
                 >
                   <p>
                     <strong>ID:</strong> {s.id}
+                    <p>
+                      <strong>Prosek ocena:</strong> {s.avg_ocena ?? "—"}
+                    </p>
                   </p>
                 </AppCard>
               ))}

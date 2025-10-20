@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Controllers\Controller;
 use App\Models\Subject;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 class SubjectController extends Controller
@@ -14,12 +15,23 @@ class SubjectController extends Controller
      */
     public function index(Request $request)
     {
-        $q = $request->query('q', '');
+        $q       = $request->query('q', '');
+        $perPage = (int) $request->query('per_page', 10);
 
-        $subjects = Subject::query()
-            ->when($q !== '', fn($qb) => $qb->where('naziv', 'like', "%{$q}%"))
-            ->orderBy('id')
-            ->paginate((int) $request->query('per_page', 10));
+        $subjects = DB::table('subjects')
+            ->leftJoin('teachers', 'teachers.subject_id', '=', 'subjects.id')
+            ->leftJoin('grades', 'grades.teacher_id', '=', 'teachers.id')
+            ->when($q, fn($qb) => $qb->where('subjects.naziv', 'like', "%{$q}%"))
+            ->groupBy('subjects.id', 'subjects.naziv', 'subjects.created_at', 'subjects.updated_at')
+            ->select(
+                'subjects.id',
+                'subjects.naziv',
+                'subjects.created_at',
+                'subjects.updated_at',
+                DB::raw('ROUND(AVG(grades.ocena), 2) as avg_ocena')
+            )
+            ->orderBy('subjects.id')
+            ->paginate($perPage);
 
         return response()->json($subjects);
     }
