@@ -23,13 +23,13 @@ use Illuminate\Support\Facades\Route;
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
-Route::group(['middleware'=>['auth:sanctum']], function(){
+Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::put('/students/{student}', [StudentController::class, 'update']);
-    Route::apiResource('students', StudentController::class)->only(['index','show']);
+    Route::apiResource('students', StudentController::class)->only(['index', 'show']);
 
     Route::apiResource('parents', ParentModelController::class)->only(['index', 'show', 'update']);
 
-    Route::apiResource('teachers', TeacherController::class)->only(['index','show','update']);
+    Route::apiResource('teachers', TeacherController::class)->only(['index', 'show', 'update']);
 
     Route::apiResource('subjects', SubjectController::class);
 
@@ -42,5 +42,5 @@ Route::group(['middleware'=>['auth:sanctum']], function(){
 });
 
 Route::middleware('auth:sanctum')->get('/me', function (Request $request) {
-    return $request->user()->load(['student', 'teacher', 'parentModel']);
+    return $request->user()->load(['student', 'teacher', 'parentModel.students']);
 });

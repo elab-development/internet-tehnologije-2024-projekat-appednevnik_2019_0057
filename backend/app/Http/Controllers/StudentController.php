@@ -14,11 +14,11 @@ class StudentController extends Controller
      * Display a listing of the resource.
      */
     public function index(Request $request)
-    {
+    {/*
         $user = $request->user();
         if (!$user || strtolower($user->role) !== 'admin' && strtolower($user->role) !== 'nastavnik') {
             return response()->json(['message' => 'Zabranjen pristup.'], 403);
-        }
+        }*/
 
         $q = $request->query('q');
         $perPage = $request->query('per_page', 10);
@@ -49,7 +49,7 @@ class StudentController extends Controller
     public function show(Student $student)
     {
         $student->load([
-            'parent',
+            'parent.user',
             'grades.teacher.subject',
             'user:id,name,email,role',
         ]);
