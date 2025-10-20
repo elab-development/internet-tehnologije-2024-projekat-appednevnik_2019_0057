@@ -1,106 +1,115 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import AppCard from "../components/AppCard";
 import AppInput from "../components/AppInput";
 import AppModal from "../components/AppModal";
 import AppButton from "../components/AppButton";
-import { STUDENTS } from "../data/students";
-import { DEFAULT_SUBJECTS } from "../data/subjects";
-import { DEFAULT_GRADES_MAP } from "../data/grades";
-
-
-const LS_SUBJECTS = "subjects";
-const LS_GRADES = "grades";
-
-function loadSubjects() {
-  const raw = localStorage.getItem(LS_SUBJECTS);
-  if (!raw) return DEFAULT_SUBJECTS;
-  try { return JSON.parse(raw); } catch { return DEFAULT_SUBJECTS; }
-}
-
-function loadGradesMap() {
-  try { return JSON.parse(localStorage.getItem(LS_GRADES) || "{}"); }
-  catch { return {}; }
-}
-function saveGradesMap(map) {
-  localStorage.setItem(LS_GRADES, JSON.stringify(map));
-}
+import api from "../api/axios";
 
 export default function Students() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  const [selectedStudent, setSelectedStudent] = useState(null);
   const perPage = 4;
 
-  const [subjects, setSubjects] = useState(loadSubjects());
-  const [gradesMap, setGradesMap] = useState(loadGradesMap());
+  const [items, setItems] = useState([]);
+  const [meta, setMeta] = useState({
+    current_page: 1,
+    last_page: 1,
+    total: 0,
+  });
 
-  const [predmetId, setPredmetId] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState("");
+
+  const [selectedStudent, setSelectedStudent] = useState(null);
+  const [adding, setAdding] = useState(false);
   const [ocena, setOcena] = useState("5");
 
   const user = JSON.parse(localStorage.getItem("user") || "null");
-  const role = String(user?.role || "").trim().toLowerCase();
-  const canSeeStudents = role === "nastavnik";
+  const role = String(user?.role || "")
+    .trim()
+    .toLowerCase();
+  const canAddGrade = role === "nastavnik";
+
+  const fetchStudents = useCallback(async () => {
+    try {
+      setLoading(true);
+      setErr("");
+      const { data } = await api.get("/students", {
+        params: { q: search, page, per_page: perPage },
+      });
+      const list = Array.isArray(data) ? data : data.data ?? [];
+      setItems(list);
+      setMeta({
+        current_page: data.current_page ?? 1,
+        last_page: data.last_page ?? 1,
+        total: data.total ?? list.length,
+      });
+    } catch (e) {
+      console.error(e);
+      setErr("Greška pri učitavanju učenika.");
+    } finally {
+      setLoading(false);
+    }
+  }, [search, page, perPage]);
 
   useEffect(() => {
-  const raw = localStorage.getItem(LS_GRADES);
-  if (!raw) {
-    localStorage.setItem(LS_GRADES, JSON.stringify(DEFAULT_GRADES_MAP));
-    setGradesMap(DEFAULT_GRADES_MAP);
-  }
-}, []);
+    fetchStudents();
+  }, [fetchStudents]);
 
   useEffect(() => {
-    const sub = loadSubjects();
-    setSubjects(sub);
-  }, []);
+    const t = setTimeout(() => {
+      setPage(1);
+      fetchStudents();
+    }, 300);
+    return () => clearTimeout(t);
+  }, [search, fetchStudents]);
 
-  useEffect(() => {
-    saveGradesMap(gradesMap);
-  }, [gradesMap]);
+  const openDetails = async (student) => {
+    try {
+      setErr("");
+      const { data } = await api.get(`/students/${student.id}`);
+      setSelectedStudent(data);
+      setOcena("5");
+    } catch (e) {
+      console.error(e);
+      setErr("Greška pri učitavanju detalja učenika.");
+    }
+  };
 
-  const filtered = useMemo(() => {
-    return STUDENTS.filter(
-      (u) =>
-        u.ime.toLowerCase().includes(search.toLowerCase()) ||
-        u.razred.toLowerCase().includes(search.toLowerCase())
-    );
-  }, [search]);
+  const closeDetails = () => setSelectedStudent(null);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
-  const safePage = Math.min(page, totalPages);
-  const currentPageStudents = useMemo(() => {
-    const startIndex = (safePage - 1) * perPage;
-    return filtered.slice(startIndex, startIndex + perPage);
-  }, [filtered, safePage]);
-
-  const gradesFor = (studentId) => gradesMap[String(studentId)] || [];
-
-  const avgFor = (studentId) => {
-    const gs = gradesFor(studentId);
+  const avgFor = (student) => {
+    const gs = student?.grades ?? [];
     if (!gs.length) return "—";
     const sum = gs.reduce((acc, g) => acc + Number(g.ocena || 0), 0);
     return (sum / gs.length).toFixed(2);
   };
 
-  const addGrade = () => {
+  const addGrade = async () => {
     if (!selectedStudent) return;
-    const sid = String(selectedStudent.id);
-    const pid = Number(predmetId);
-    const oc = Number(ocena);
+    try {
+      setAdding(true);
+      setErr("");
 
-    if (!pid || !oc) { alert("Izaberi predmet i ocenu."); return; }
+      const payload = {
+        student_id: selectedStudent.id,
+        ocena: Number(ocena),
+      };
+      await api.post("/grades", payload);
 
-    const now = new Date().toISOString().slice(0, 10);
-    const entry = { predmetId: pid, ocena: oc, datum: now };
-
-    setGradesMap(prev => {
-      const copy = { ...prev };
-      copy[sid] = [...(copy[sid] || []), entry];
-      return copy;
-    });
-
-    setPredmetId("");
-    setOcena("5");
+      const { data } = await api.get(`/students/${selectedStudent.id}`);
+      setSelectedStudent(data);
+      setOcena("5");
+    } catch (e) {
+      console.error(e);
+      const msg =
+        e?.response?.data?.message ||
+        (e?.response?.data?.errors && JSON.stringify(e.response.data.errors)) ||
+        "Greška pri dodavanju ocene.";
+      setErr(msg);
+    } finally {
+      setAdding(false);
+    }
   };
 
   return (
@@ -114,98 +123,106 @@ export default function Students() {
           value={search}
           onChange={(e) => {
             setSearch(e.target.value);
-            setPage(1);
           }}
         />
       </div>
 
-      <div className="grid">
-        {filtered.length > 0 ? (
-          currentPageStudents.map((u) => (
-            <AppCard
-              key={u.id}
-              title={u.ime}
-              actions={[
-                {
-                  label: "Detalji",
-                  variant: "primary",
-                  onClick: () => {
-                    setSelectedStudent(u);
-                    setPredmetId("");
-                    setOcena("5");
-                  },
-                },
-                {
-                  label: "Poruka",
-                  variant: "default",
-                  onClick: () => alert(`Poruka poslata: ${u.email}`),
-                },
-              ]}
+      {err && <p style={{ color: "#c00" }}>{err}</p>}
+      {loading ? (
+        <p>Učitavanje…</p>
+      ) : (
+        <>
+          <div className="grid">
+            {items.length > 0 ? (
+              items.map((u) => (
+                <AppCard
+                  key={u.id}
+                  title={u.user?.name}
+                  actions={[
+                    {
+                      label: "Detalji",
+                      variant: "primary",
+                      onClick: () => openDetails(u),
+                    },
+                  ]}
+                >
+                  <p>
+                    <strong>Razred:</strong> {u.razred ?? "-"}
+                  </p>
+                  <p>
+                    <strong>Prosek:</strong> {avgFor(u)}
+                  </p>
+                  <p>
+                    <strong>Email:</strong> {u.user?.email ?? "-"}
+                  </p>
+                  <p>
+                    <strong>Telefon:</strong> {u.telefon ?? "-"}
+                  </p>
+                </AppCard>
+              ))
+            ) : (
+              <p>Nema učenika koji odgovaraju pretrazi.</p>
+            )}
+          </div>
+          <div className="pagination">
+            <button
+              disabled={meta.current_page <= 1 || items.length === 0}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              className="btn"
             >
-              <p>
-                <strong>Razred:</strong> {u.razred}
-              </p>
-              <p>
-                <strong>Prosek:</strong> {avgFor(u.id)}
-              </p>
-              <p>
-                <strong>Email:</strong> {u.email}
-              </p>
-              <p>
-                <strong>Telefon:</strong> {u.telefon}
-              </p>
-            </AppCard>
-          ))
-        ) : (
-          <p>Nema učenika koji odgovaraju pretrazi.</p>
-        )}
-      </div>
-      <div className="pagination">
-        <button
-          disabled={safePage === 1 || filtered.length === 0}
-          onClick={() => setPage((p) => Math.max(1, p - 1))}
-          className="btn"
-        >
-          Prethodna
-        </button>
+              Prethodna
+            </button>
 
-        <span>
-          Strana {filtered.length === 0 ? 0 : safePage} /{" "}
-          {filtered.length === 0 ? 0 : totalPages}
-        </span>
+            <span>
+              Strana {items.length === 0 ? 0 : meta.current_page} /{" "}
+              {items.length === 0 ? 0 : meta.last_page}
+            </span>
 
-        <button
-          disabled={safePage === totalPages || filtered.length === 0}
-          onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-          className="btn"
-        >
-          Sledeća
-        </button>
-      </div>
+            <button
+              disabled={
+                meta.current_page >= meta.last_page || items.length === 0
+              }
+              onClick={() => setPage((p) => Math.min(meta.last_page, p + 1))}
+              className="btn"
+            >
+              Sledeća
+            </button>
+          </div>
+        </>
+      )}
 
       <AppModal
         open={!!selectedStudent}
-        onClose={() => setSelectedStudent(null)}
-        title={selectedStudent?.ime}
+        onClose={closeDetails}
+        title={selectedStudent?.user?.name || "Učenik"}
       >
         {selectedStudent && (
           <>
-            <p><strong>Razred:</strong> {selectedStudent.razred}</p>
-            <p><strong>Email:</strong> {selectedStudent.email}</p>
-            <p><strong>Telefon:</strong> {selectedStudent.telefon}</p>
+            <p>
+              <strong>Razred:</strong> {selectedStudent.razred ?? "-"}
+            </p>
+            <p>
+              <strong>Email:</strong> {selectedStudent.user?.email ?? "-"}
+            </p>
+            <p>
+              <strong>Telefon:</strong> {selectedStudent.telefon ?? "-"}
+            </p>
 
-            <hr style={{ margin: "12px 0", opacity: .3 }} />
+            <hr style={{ margin: "12px 0", opacity: 0.3 }} />
 
             <h4>Ocene</h4>
-            {gradesFor(selectedStudent.id).length === 0 ? (
+            {!selectedStudent.grades?.length ? (
               <p>Nema upisanih ocena.</p>
             ) : (
               <ul style={{ paddingLeft: 18 }}>
-                {gradesFor(selectedStudent.id).map((g, idx) => {
-                  const subj = subjects.find(s => s.id === g.predmetId)?.naziv || `#${g.predmetId}`;
+                {selectedStudent.grades.map((g) => {
+                  const subj =
+                    g?.teacher?.subject?.naziv ??
+                    `#${g?.teacher?.subject_id ?? "?"}`;
                   return (
-                    <li key={idx}>
-                      {subj} — <strong>{g.ocena}</strong> <span style={{ opacity: .7 }}>({g.datum})</span>
+                    <li key={g.id}>
+                      {subj} — <strong>{g.ocena}</strong>{" "}
+                      <span style={{ opacity: 0.7 }}>({g.datum})</span>
                     </li>
                   );
                 })}
@@ -213,39 +230,37 @@ export default function Students() {
             )}
 
             <p style={{ marginTop: 8 }}>
-              <strong>Prosek:</strong> {avgFor(selectedStudent.id)}
+              <strong>Prosek:</strong> {avgFor(selectedStudent)}
             </p>
 
-            {canSeeStudents && (<>
-            <div className="input-wrap" style={{ marginTop: 12 }}>
-              <label>Predmet</label>
-              <select
-                className="input"
-                value={predmetId}
-                onChange={(e) => setPredmetId(e.target.value)}
-              >
-                <option value="">— izaberi predmet —</option>
-                {subjects.map(s => (
-                  <option key={s.id} value={s.id}>{s.naziv}</option>
-                ))}
-              </select>
-            </div>
+            {canAddGrade && (
+              <>
+                <div className="input-wrap" style={{ marginTop: 12 }}>
+                  <label>Ocena</label>
+                  <select
+                    className="input"
+                    value={ocena}
+                    onChange={(e) => setOcena(e.target.value)}
+                  >
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <option key={n} value={n}>
+                        {n}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-            <div className="input-wrap" style={{ marginTop: 12 }}>
-              <label>Ocena</label>
-              <select
-                className="input"
-                value={ocena}
-                onChange={(e) => setOcena(e.target.value)}
-              >
-                {[1,2,3,4,5].map(n => <option key={n} value={n}>{n}</option>)}
-              </select>
-            </div>
-
-            <div style={{ marginTop: 12, display: "flex", gap: 8 }}>
-              <AppButton variant="primary" onClick={addGrade}>Dodaj ocenu</AppButton>
-            </div>
-            </>)}
+                <div style={{ marginTop: 12, display: "flex", gap: 8 }}>
+                  <AppButton
+                    variant="primary"
+                    onClick={addGrade}
+                    disabled={adding}
+                  >
+                    {adding ? "Dodavanje ocene…" : "Dodaj ocenu"}
+                  </AppButton>
+                </div>
+              </>
+            )}
           </>
         )}
       </AppModal>
