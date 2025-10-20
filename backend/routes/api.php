@@ -29,6 +29,8 @@ Route::get('public/students-free', [StudentController::class, 'indexFreeStudents
 
 Route::get('/holidays', [PublicDataController::class, 'holidays']);
 
+
+
 Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::put('/students/{student}', [StudentController::class, 'update']);
     Route::apiResource('students', StudentController::class)->only(['index', 'show']);
@@ -42,6 +44,7 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::apiResource('grades', GradeController::class)->only(['index', 'show', 'store']);
 
     Route::get('students/{student}/grades', [GradeController::class, 'byStudent']);
+    Route::get('/students/{student}/export', [StudentController::class, 'exportCsv']);
 
 
     Route::post('/logout', [AuthController::class, 'logout']);

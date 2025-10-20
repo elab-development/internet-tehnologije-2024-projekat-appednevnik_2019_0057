@@ -29,6 +29,7 @@ export default function Students() {
     .trim()
     .toLowerCase();
   const canAddGrade = role === "nastavnik";
+  const canExport = role === "nastavnik" || role === "admin";
 
   const fetchStudents = useCallback(async () => {
     try {
@@ -112,6 +113,39 @@ export default function Students() {
     }
   };
 
+  const handleExport = async (student) => {
+    try {
+      setErr("");
+      const res = await api.get(`/students/${student.id}/export`, {
+        responseType: "blob",
+      });
+
+      const blob = new Blob([res.data], {
+        type: "text/csv;charset=utf-8;",
+      });
+
+      const filenameSafeName = (student?.user?.name || "ucenik").replace(
+        /\s+/g,
+        "_"
+      );
+
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `ocene_${filenameSafeName}_${student.id}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error(e);
+      setErr(
+        e?.response?.data?.message ||
+          "Greška pri eksportu CSV fajla za učenika."
+      );
+    }
+  };
+
   return (
     <div className="container page">
       <h1>Učenici</h1>
@@ -134,32 +168,32 @@ export default function Students() {
         <>
           <div className="grid">
             {items.length > 0 ? (
-              items.map((u) => (
-                <AppCard
-                  key={u.id}
-                  title={u.user?.name}
-                  actions={[
-                    {
-                      label: "Detalji",
-                      variant: "primary",
-                      onClick: () => openDetails(u),
-                    },
-                  ]}
-                >
-                  <p>
-                    <strong>Razred:</strong> {u.razred ?? "-"}
-                  </p>
-                  <p>
-                    <strong>Prosek:</strong> {avgFor(u)}
-                  </p>
-                  <p>
-                    <strong>Email:</strong> {u.user?.email ?? "-"}
-                  </p>
-                  <p>
-                    <strong>Telefon:</strong> {u.telefon ?? "-"}
-                  </p>
-                </AppCard>
-              ))
+              items.map((u) => {
+                const actions = [
+                  {
+                    label: "Detalji",
+                    variant: "primary",
+                    onClick: () => openDetails(u),
+                  },
+                ];
+
+                return (
+                  <AppCard key={u.id} title={u.user?.name} actions={actions}>
+                    <p>
+                      <strong>Razred:</strong> {u.razred ?? "-"}
+                    </p>
+                    <p>
+                      <strong>Prosek:</strong> {avgFor(u)}
+                    </p>
+                    <p>
+                      <strong>Email:</strong> {u.user?.email ?? "-"}
+                    </p>
+                    <p>
+                      <strong>Telefon:</strong> {u.telefon ?? "-"}
+                    </p>
+                  </AppCard>
+                );
+              })
             ) : (
               <p>Nema učenika koji odgovaraju pretrazi.</p>
             )}
@@ -232,6 +266,17 @@ export default function Students() {
             <p style={{ marginTop: 8 }}>
               <strong>Prosek:</strong> {avgFor(selectedStudent)}
             </p>
+
+            {canExport && (
+              <div style={{ marginTop: 12 }}>
+                <AppButton
+                  variant="default"
+                  onClick={() => handleExport(selectedStudent)}
+                >
+                  Export CSV
+                </AppButton>
+              </div>
+            )}
 
             {canAddGrade && (
               <>

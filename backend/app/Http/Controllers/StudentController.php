@@ -7,6 +7,7 @@ use App\Models\ParentModel;
 use App\Models\Student;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class StudentController extends Controller
 {
@@ -113,13 +114,46 @@ class StudentController extends Controller
     }
 
     public function indexFreeStudents()
-{
-    // učenici koji nemaju roditelja
-    $students = \App\Models\Student::with(['user:id,name,email'])
-        ->whereNull('parent_model_id')
-        ->orderBy('id')
-        ->get(['id', 'user_id', 'razred', 'telefon', 'parent_model_id']);
+    {
+        $students = Student::with(['user:id,name,email'])
+            ->whereNull('parent_model_id')
+            ->orderBy('id')
+            ->get(['id', 'user_id', 'razred', 'telefon', 'parent_model_id']);
 
-    return response()->json($students);
-}
+        return response()->json($students);
+    }
+
+    public function exportCsv(Student $student)
+    {
+        $user = request()->user();
+        if (!$user || !in_array(strtolower($user->role), ['admin', 'nastavnik'])) {
+            return response()->json(['message' => 'Nemate dozvolu za ovu akciju.'], 403);
+        }
+
+        $student->load(['user', 'grades']);
+
+        $fileName = 'student_' . $student->id . '.csv';
+
+        return response()->stream(function () use ($student) {
+            $handle = fopen('php://output', 'w');
+
+            fputcsv($handle, ['ID', 'Ime', 'Email', 'Razred', 'Telefon', 'Prosek']);
+
+            $avg = $student->grades->count() ? round($student->grades->avg('ocena'), 2) : '';
+
+            fputcsv($handle, [
+                $student->id,
+                optional($student->user)->name,
+                optional($student->user)->email,
+                $student->razred,
+                $student->telefon,
+                $avg,
+            ]);
+
+            fclose($handle);
+        }, 200, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
+        ]);
+    }
 }
