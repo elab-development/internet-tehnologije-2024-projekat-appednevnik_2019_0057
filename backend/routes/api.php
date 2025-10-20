@@ -8,6 +8,7 @@ use App\Http\Controllers\SubjectController;
 use App\Http\Controllers\TeacherController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\PublicDataController;
 
 /*
 |--------------------------------------------------------------------------
@@ -25,6 +26,8 @@ Route::post('/login', [AuthController::class, 'login']);
 
 Route::get('subjects', [SubjectController::class, 'index']);
 Route::get('public/students-free', [StudentController::class, 'indexFreeStudents']);
+
+Route::get('/holidays', [PublicDataController::class, 'holidays']);
 
 Route::group(['middleware' => ['auth:sanctum']], function () {
     Route::put('/students/{student}', [StudentController::class, 'update']);

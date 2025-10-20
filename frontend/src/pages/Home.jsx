@@ -40,6 +40,8 @@ export default function Home() {
   const [err, setErr] = useState("");
 
   const [grades, setGrades] = useState([]);
+  const [holidays, setHolidays] = useState([]);
+  const [holidaysErr, setHolidaysErr] = useState("");
 
   const today = new Date().toLocaleDateString("sr-RS", {
     day: "2-digit",
@@ -60,10 +62,8 @@ export default function Home() {
         setMe(meData);
 
         if (meData.role === "nastavnik") {
-          const { data } = await api.get("/grades", {
-            params: { per_page: 1000 },
-          });
-          const list = Array.isArray(data) ? data : data.data ?? [];
+          const { data } = await api.get("/grades", { params: { per_page: 1000 } });
+          const list = Array.isArray(data) ? data : (data.data ?? []);
           if (cancelled) return;
           setGrades(list);
         }
@@ -76,14 +76,33 @@ export default function Home() {
     };
 
     load();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [userLS]);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchHolidays = async () => {
+      try {
+        setHolidaysErr("");
+        const year = new Date().getFullYear();
+        const { data } = await api.get(`/holidays?year=${year}&country=RS`);
+        if (cancelled) return;
+        setHolidays((Array.isArray(data) ? data : []).slice(0, 5));
+      } catch (e) {
+        console.error(e);
+        if (!cancelled) setHolidaysErr("Greška pri učitavanju praznika sa javnog servisa.");
+      }
+    };
+
+    fetchHolidays();
+    return () => { cancelled = true; };
+  }, []);
+
   const subjectByClass = useMemo(() => {
-    if (!me || me.role !== "nastavnik" || !grades.length)
+    if (!me || me.role !== "nastavnik" || !grades.length) {
       return { subjectName: "", rows: [] };
+    }
 
     const myTeacherId = me?.teacher?.id;
     const subjectName = me?.teacher?.subject?.naziv || "Moj predmet";
@@ -160,6 +179,25 @@ export default function Home() {
           )}
         </>
       )}
+
+      <h3 style={{ marginTop: "2rem" }}>Predstojeći državni praznici</h3>
+      {holidaysErr && <p style={{ color: "#c00" }}>{holidaysErr}</p>}
+      {!holidaysErr && holidays.length === 0 && (
+        <p>Učitavanje praznika…</p>
+      )}
+      <div className="grid" style={{ marginTop: 12 }}>
+        {holidays.map((h, i) => (
+          <AppCard key={`${h.date}-${i}`} title={h.localName} className="card-info">
+            <p>
+              <strong>Datum:</strong>{" "}
+              {new Date(h.date).toLocaleDateString("sr-RS")}
+            </p>
+            <p>
+              <strong>Opis:</strong> {h.name}
+            </p>
+          </AppCard>
+        ))}
+      </div>
     </section>
   );
 }
