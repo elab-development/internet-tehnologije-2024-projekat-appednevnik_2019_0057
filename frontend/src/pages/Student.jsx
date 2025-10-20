@@ -16,6 +16,9 @@ export default function Student() {
   const [msg, setMsg] = useState("");
   const [err, setErr] = useState("");
 
+  const [children, setChildren] = useState([]);
+  const [selectedChildId, setSelectedChildId] = useState(null);
+
   const canEdit = user?.role === "roditelj";
 
   useEffect(() => {
@@ -29,37 +32,22 @@ export default function Student() {
 
       try {
         const { data: me } = await api.get("/me");
-        let studentId = null;
 
         if (me.role === "ucenik" && me.student) {
-          studentId = me.student.id;
+          setChildren([]);
+          setSelectedChildId(me.student.id);
         } else if (me.role === "roditelj") {
           const kids = Array.isArray(me.parent_model?.students)
             ? me.parent_model.students
             : [];
-          if (kids.length > 0) {
-            studentId = kids[0].id; // za sada uzimam prvo dete
-          }
-        }
-        console.log("ME payload:", me);
-
-        if (!studentId) {
-          if (!cancelled) {
-            setStudent(null);
-            setErr("Nije pronađen učenik za prikaz.");
-            setLoading(false);
-          }
-          return;
+          setChildren(kids);
+          setSelectedChildId(kids[0]?.id ?? null); // podrazumevano prvo dete
+        } else {
+          setChildren([]);
+          setSelectedChildId(null);
         }
 
-        const { data: s } = await api.get(`/students/${studentId}`);
-
-        if (cancelled) return;
-
-        setStudent(s);
-        setEmail(s?.user?.email ?? me?.email ?? "");
-        setTelefon(s?.telefon ?? "");
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       } catch (e) {
         if (!cancelled) {
           console.error(e);
@@ -74,6 +62,41 @@ export default function Student() {
       cancelled = true;
     };
   }, [user]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadStudent = async () => {
+      if (!selectedChildId) {
+        setStudent(null);
+        return;
+      }
+      setLoading(true);
+      setErr("");
+      setMsg("");
+
+      try {
+        const { data: s } = await api.get(`/students/${selectedChildId}`);
+        if (cancelled) return;
+
+        setStudent(s);
+        setEmail(s?.user?.email ?? "");
+        setTelefon(s?.telefon ?? "");
+        setLoading(false);
+      } catch (e) {
+        if (!cancelled) {
+          console.error(e);
+          setErr("Nije pronađen učenik za prikaz.");
+          setLoading(false);
+        }
+      }
+    };
+
+    loadStudent();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedChildId]);
 
   const avg = useMemo(() => {
     const gs = student?.grades ?? [];
@@ -137,6 +160,23 @@ export default function Student() {
   return (
     <div className="container page">
       <h1>Učenik</h1>
+
+      {user?.role === "roditelj" && children.length > 0 && (
+        <div className="input-wrap" style={{ maxWidth: 360 }}>
+          <label>Izaberi dete</label>
+          <select
+            className="input"
+            value={selectedChildId ?? ""}
+            onChange={(e) => setSelectedChildId(Number(e.target.value))}
+          >
+            {children.map((ch) => (
+              <option key={ch.id} value={ch.id}>
+                {ch.user?.name.trim() || `Učenik #${ch.id}`}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <div className="grid">
         <AppCard title="Osnovni podaci">

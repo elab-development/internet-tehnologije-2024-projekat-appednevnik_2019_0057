@@ -45,9 +45,7 @@ export default function Login() {
       <h1>Prijava</h1>
 
       {error && (
-        <p className="error-text" style={{ marginBottom: 8 }}>
-          {error}
-        </p>
+        <p className="error-text" style={{ marginBottom: 8 }}> {error} </p>
       )}
       {msg && <p style={{ color: "green", marginBottom: 8 }}>{msg}</p>}
 
@@ -63,7 +61,6 @@ export default function Login() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-        {error && <p className="error-text">{error}</p>}
         <AppButton type="submit" variant="primary">
           {loading ? "Prijava..." : "Prijavi se"}
         </AppButton>

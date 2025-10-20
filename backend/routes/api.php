@@ -42,5 +42,5 @@ Route::group(['middleware' => ['auth:sanctum']], function () {
 });
 
 Route::middleware('auth:sanctum')->get('/me', function (Request $request) {
-    return $request->user()->load(['student', 'teacher', 'parentModel.students']);
+    return $request->user()->load(['student.user', 'teacher.user', 'parentModel.students.user']);
 });
