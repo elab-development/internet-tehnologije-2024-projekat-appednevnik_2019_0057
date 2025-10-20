@@ -35,6 +35,8 @@ export default function Profile() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
+  const [initial, setInitial] = useState({ email: "", telefon: "" });
+
   const unavailable = user?.role === "ucenik" || user?.role === "admin";
 
   useEffect(() => {
@@ -47,15 +49,19 @@ export default function Profile() {
         if (me.role === "roditelj" && me.parent_model) {
           setEmail(me.email || "");
           setTelefon(me.parent_model.telefon || "");
+          setInitial({ email: me.email, telefon: me.parent_model.telefon });
         } else if (me.role === "nastavnik" && me.teacher) {
           setEmail(me.email || "");
           setTelefon(me.teacher.telefon || "");
+          setInitial({ email: me.email, telefon: me.teacher.telefon });
         } else if (me.role === "ucenik" && me.student) {
           setEmail(me.email || "");
           setTelefon(me.student.telefon || "");
+          setInitial({ email: me.email, telefon: me.student.telefon });
         } else {
           setEmail(me.email || "");
           setTelefon("");
+          setInitial({ email: "", telefon: "" });
         }
       } catch (e) {
         console.error("Greška pri učitavanju profila:", e);
@@ -112,6 +118,7 @@ export default function Profile() {
 
       const updated = { ...user, email: email.trim(), telefon: telefon.trim() };
       setUser(updated);
+      setInitial({ email: email, telefon: telefon });
       setMessage("Podaci su sačuvani.");
     } catch (e) {
       const apiErr = e?.response?.data;
