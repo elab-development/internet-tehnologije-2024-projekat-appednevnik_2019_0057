@@ -1,116 +1,136 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import AppCard from "../components/AppCard";
 import AppInput from "../components/AppInput";
 import AppButton from "../components/AppButton";
-import { DEFAULT_SUBJECTS } from "../data/subjects";
-
-const LS_SUBJECTS = "subjects";
-const LS_GRADES = "grades"; 
-
-function loadSubjects() {
-  const raw = localStorage.getItem(LS_SUBJECTS);
-  if (!raw) return DEFAULT_SUBJECTS;
-  try { return JSON.parse(raw); } catch { return DEFAULT_SUBJECTS; }
-}
-
-function saveSubjects(list) {
-  localStorage.setItem(LS_SUBJECTS, JSON.stringify(list));
-}
-
-function loadGradesMap() {
-  try { return JSON.parse(localStorage.getItem(LS_GRADES) || "{}"); }
-  catch { return {}; }
-}
-
-function saveGradesMap(map) {
-  localStorage.setItem(LS_GRADES, JSON.stringify(map));
-}
-
-function removeSubjectFromGrades(subjectId) {
-  const grades = loadGradesMap();
-  let changed = false;
-  for (const sid of Object.keys(grades)) {
-    const before = grades[sid]?.length || 0;
-    grades[sid] = (grades[sid] || []).filter(g => g.predmetId !== subjectId);
-    if (grades[sid].length !== before) changed = true;
-  }
-  if (changed) saveGradesMap(grades);
-}
-
-function subjectAverage(subjectId) {
-  const grades = loadGradesMap(); 
-  const all = [];
-
-  for (const sid of Object.keys(grades)) {
-    for (const g of (grades[sid] || [])) {
-      if (g.predmetId === subjectId) all.push(Number(g.ocena));
-    }
-  }
-
-  if (!all.length) return "—";
-  const avg = all.reduce((a, b) => a + b, 0) / all.length;
-  return avg.toFixed(2);
-}
+import api from "../api/axios";
 
 export default function Subjects() {
-  const [subjects, setSubjects] = useState(loadSubjects());
+  const [subjects, setSubjects] = useState([]);
   const [naziv, setNaziv] = useState("");
   const [error, setError] = useState("");
+  const [msg, setMsg] = useState("");
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => { saveSubjects(subjects); }, [subjects]);
+  const user = JSON.parse(localStorage.getItem("user") || "null");
+  const isAdmin = String(user?.role || "").toLowerCase() === "admin";
 
-  const nextId = useMemo(() => {
-    return subjects.length ? Math.max(...subjects.map(s => s.id)) + 1 : 1;
-  }, [subjects]);
+  async function fetchSubjects() {
+    try {
+      setLoading(true);
+      setMsg("");
+      setError("");
+      const { data } = await api.get("/subjects");
+      const list = Array.isArray(data) ? data : data?.data ?? [];
+      setSubjects(list);
+      setSubjects(list.sort((a, b) => a.id - b.id));
+    } catch (e) {
+      console.error(e);
+      setError("Greška pri učitavanju predmeta.");
+    } finally {
+      setLoading(false);
+    }
+  }
 
-  const handleAdd = () => {
-    const name = naziv.trim();
-    setError("");
-    if (!name) { setError("Naziv je obavezan."); return; }
-    if (subjects.some(s => s.naziv.toLowerCase() === name.toLowerCase())) {
-      setError("Predmet sa tim nazivom već postoji.");
+  useEffect(() => {
+    if (!isAdmin) {
+      setLoading(false);
       return;
     }
-    setSubjects(prev => [...prev, { id: nextId, naziv: name }]);
-    setNaziv("");
+    fetchSubjects();
+  }, [isAdmin]);
+
+  const handleAdd = async () => {
+    const name = naziv.trim();
+    setError("");
+    setMsg("");
+    if (!name) {
+      setError("Naziv je obavezan.");
+      return;
+    }
+
+    try {
+      const { data: created } = await api.post("/subjects", { naziv: name });
+      setSubjects((prev) => [...prev, created].sort((a, b) => a.id - b.id));
+      setNaziv("");
+      setMsg("Predmet je dodat.");
+    } catch (e) {
+      console.error(e);
+      const v = e?.response?.data;
+      if (v?.errors?.naziv?.length) setError(v.errors.naziv[0]);
+      else setError(v?.message || "Greška pri dodavanju predmeta.");
+    }
   };
 
-  const handleDelete = (id) => {
-    if (!window.confirm("Obrisati predmet? Ovo će ukloniti i ocene za taj predmet.")) return;
-    setSubjects(prev => prev.filter(s => s.id !== id));
-    removeSubjectFromGrades(id);
+  const handleDelete = async (id) => {
+    if (
+      !window.confirm(
+        "Obrisati predmet? Ovo će ukloniti i ocene za taj predmet."
+      )
+    )
+      return;
+    try {
+      await api.delete(`/subjects/${id}`);
+      setSubjects((prev) => prev.filter((s) => s.id !== id));
+      setMsg("Predmet je obrisan.");
+      setError("");
+    } catch (e) {
+      console.error(e);
+      setError(e?.response?.data?.message || "Greška pri brisanju predmeta.");
+    }
   };
 
   return (
     <div className="container page">
       <h1>Predmeti</h1>
 
-      <AppCard title="Dodaj predmet">
-        <div className="inline-form">
-          <AppInput
-            label="Naziv predmeta"
-            value={naziv}
-            onChange={(e) => setNaziv(e.target.value)}
-            error={error}
-          />
-          <AppButton variant="primary" onClick={handleAdd}>Dodaj</AppButton>
-        </div>
-      </AppCard>
+      {!isAdmin && (
+        <p style={{ color: "#c00" }}>
+          Samo administrator može da pristupi ovoj stranici.
+        </p>
+      )}
 
-      <div className="grid" style={{ marginTop: 16 }}>
-        {subjects.map((s) => (
-          <AppCard
-            key={s.id}
-            title={s.naziv}
-            actions={[
-              { label: "Obriši", variant: "danger", onClick: () => handleDelete(s.id) }
-            ]}
-          >
-            <p><strong>ID:</strong> {s.id}</p>
-            <p><strong>Prosek ocena (svi učenici):</strong> {subjectAverage(s.id)}</p>
+      {isAdmin && (
+        <>
+          <AppCard title="Dodaj predmet">
+            <div className="inline-form">
+              <AppInput
+                label="Naziv predmeta"
+                value={naziv}
+                onChange={(e) => setNaziv(e.target.value)}
+                error={error}
+              />
+              <AppButton variant="primary" onClick={handleAdd}>
+                Dodaj
+              </AppButton>
+            </div>
+            {msg && <p style={{ color: "green", marginTop: 8 }}>{msg}</p>}
           </AppCard>
-        ))}
-      </div>
+
+          {loading ? (
+            <p>Učitavanje…</p>
+          ) : (
+            <div className="grid" style={{ marginTop: 16 }}>
+              {subjects.map((s) => (
+                <AppCard
+                  key={s.id}
+                  title={s.naziv}
+                  actions={[
+                    {
+                      label: "Obriši",
+                      variant: "danger",
+                      onClick: () => handleDelete(s.id),
+                    },
+                  ]}
+                >
+                  <p>
+                    <strong>ID:</strong> {s.id}
+                  </p>
+                </AppCard>
+              ))}
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 }
