@@ -1,8 +1,7 @@
 import AppCard from "../components/AppCard";
 import { useMemo, useState, useEffect } from "react";
 import { useLocalStorage } from "../hooks/useLocalStorage";
-import { STUDENTS } from "../data/students";
-import { DEFAULT_GRADES_MAP } from "../data/grades";
+import api from "../api/axios";
 
 const OBAVESTENJA = [
   {
@@ -34,11 +33,13 @@ const tipToClass = {
   danger: "card-danger",
 };
 
-const LS_GRADES = "grades";
-
 export default function Home() {
-  const [user] = useLocalStorage("user", null);
-  const [gradesMap, setGradesMap] = useState({});
+  const [userLS] = useLocalStorage("user", null);
+  const [me, setMe] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState("");
+
+  const [grades, setGrades] = useState([]);
 
   const today = new Date().toLocaleDateString("sr-RS", {
     day: "2-digit",
@@ -47,55 +48,76 @@ export default function Home() {
   });
 
   useEffect(() => {
-    const load = () => {
+    let cancelled = false;
+
+    const load = async () => {
       try {
-       const raw = localStorage.getItem(LS_GRADES);
-       setGradesMap(raw ? JSON.parse(raw) : DEFAULT_GRADES_MAP);
-      } catch {
-        setGradesMap({});
+        setLoading(true);
+        setErr("");
+
+        const { data: meData } = await api.get("/me");
+        if (cancelled) return;
+        setMe(meData);
+
+        if (meData.role === "nastavnik") {
+          const { data } = await api.get("/grades", {
+            params: { per_page: 1000 },
+          });
+          const list = Array.isArray(data) ? data : data.data ?? [];
+          if (cancelled) return;
+          setGrades(list);
+        }
+      } catch (e) {
+        console.error(e);
+        if (!cancelled) setErr("Greška pri učitavanju podataka.");
+      } finally {
+        if (!cancelled) setLoading(false);
       }
     };
 
     load();
-
-    const onStorage = (e) => {
-      if (e.key === LS_GRADES) {
-       load();
-      }
+    return () => {
+      cancelled = true;
     };
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
-  }, []);
+  }, [userLS]);
 
-  const stats = useMemo(() => {
-    const total = STUDENTS.length;
-    let sum = 0;
-    let count = 0;
+  const subjectByClass = useMemo(() => {
+    if (!me || me.role !== "nastavnik" || !grades.length)
+      return { subjectName: "", rows: [] };
 
-    STUDENTS.forEach((u) => {
-      const gs = gradesMap[String(u.id)] || [];
-      if (gs.length) {
-        sum += gs.reduce((acc, g) => acc + Number(g.ocena || 0), 0);
-        count += gs.length;
-      }
+    const myTeacherId = me?.teacher?.id;
+    const subjectName = me?.teacher?.subject?.naziv || "Moj predmet";
+
+    const byClass = new Map();
+    grades.forEach((g) => {
+      if (!g?.teacher || g.teacher.id !== myTeacherId) return;
+      const razred = g?.student?.razred || "—";
+      const ocena = Number(g?.ocena || 0);
+      if (!ocena) return;
+
+      const rec = byClass.get(razred) || { sum: 0, cnt: 0 };
+      rec.sum += ocena;
+      rec.cnt += 1;
+      byClass.set(razred, rec);
     });
 
-    const avg = count > 0 ? (sum / count) : 0;
-    const gradesCount = new Set(STUDENTS.map((u) => u.razred)).size;
+    const rows = Array.from(byClass.entries())
+      .map(([razred, { sum, cnt }]) => ({
+        razred,
+        avg: (sum / cnt).toFixed(2),
+        cnt,
+      }))
+      .sort((a, b) => a.razred.localeCompare(b.razred, "sr"));
 
-    return {
-      total,
-      avg: avg.toFixed(2),
-      gradesCount,
-    };
-  }, [gradesMap]);
+    return { subjectName, rows };
+  }, [me, grades]);
 
   return (
     <section className="container page">
       <h1>Dobrodošli u e-Dnevnik</h1>
       <p style={{ opacity: 0.8, marginTop: 4 }}>
         {today}
-        {user?.name ? ` • Prijavljeni korisnik: ${user.name}` : ""}
+        {me?.name ? ` • Prijavljeni korisnik: ${me.name}` : ""}
       </p>
       <h2 style={{ marginTop: "2rem" }}>Obaveštenja / Najave</h2>
       <div className="grid">
@@ -110,25 +132,33 @@ export default function Home() {
           </AppCard>
         ))}
       </div>
-     
-     {(user?.role === "nastavnik" || user?.role === "admin") && (
+
+      {loading && <p style={{ marginTop: 16 }}>Učitavanje…</p>}
+      {err && <p style={{ color: "#c00", marginTop: 16 }}>{err}</p>}
+
+      {!loading && !err && me?.role === "nastavnik" && (
         <>
-      <h3 style={{ marginTop: "1.25rem" }}>Statistika</h3>
-      <div className="stats-grid">
-        <div className="stat">
-          <div className="stat-label">Ukupno učenika</div>
-          <div className="stat-value">{stats.total}</div>
-        </div>
-        <div className="stat">
-          <div className="stat-label">Prosečna ocena</div>
-          <div className="stat-value">{stats.avg}</div>
-        </div>
-        <div className="stat">
-          <div className="stat-label">Broj razreda</div>
-          <div className="stat-value">{stats.gradesCount}</div>
-        </div>
-      </div>
-      </>
+          <h3 style={{ marginTop: "1.5rem" }}>
+            Prosek po odeljenjima — {subjectByClass.subjectName}
+          </h3>
+
+          {subjectByClass.rows.length === 0 ? (
+            <p>Nema dovoljno podataka za statistiku.</p>
+          ) : (
+            <div className="grid" style={{ marginTop: 12 }}>
+              {subjectByClass.rows.map((row) => (
+                <AppCard key={row.razred} title={`Razred: ${row.razred}`}>
+                  <p>
+                    <strong>Prosečna ocena:</strong> {row.avg}
+                  </p>
+                  <p style={{ opacity: 0.8 }}>
+                    <strong>Ukupno ocena:</strong> {row.cnt}
+                  </p>
+                </AppCard>
+              ))}
+            </div>
+          )}
+        </>
       )}
     </section>
   );
