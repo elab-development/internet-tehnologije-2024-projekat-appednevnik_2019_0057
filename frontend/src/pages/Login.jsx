@@ -22,7 +22,7 @@ export default function Login() {
       const token = res.data.access_token;
       if (!token) throw new Error("Nije vraćen token.");
 
-      localStorage.setItem("token", token);
+      localStorage.setItem("token", res.data.access_token || res.data.token);
       setAuthToken(token);
 
       if (res.data.user) {

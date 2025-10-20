@@ -15,7 +15,7 @@ class ParentModelController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        if (!$user || strtolower($user->role) !== 'admin' && strtolower($user->role) !== 'nastavnik') {
+        if (!$user || strtolower($user->role) !== 'admin' && strtolower($user->role) !== 'roditelj') {
             return response()->json(['message' => 'Zabranjen pristup.'], 403);
         }
 
