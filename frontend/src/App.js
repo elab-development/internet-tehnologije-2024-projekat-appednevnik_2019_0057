@@ -1,5 +1,5 @@
 import React from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import NavBar from "./components/NavBar";
 import Footer from "./components/Footer";
 import Breadcrumbs from "./components/Breadcrumbs";
@@ -16,8 +16,9 @@ import { useLocalStorage } from "./hooks/useLocalStorage";
 import { useEffect } from "react";
 import api, { setAuthToken } from "./api/axios";
 
-
 function App() {
+  const { pathname } = useLocation();
+
   useEffect(() => {
     const t = localStorage.getItem("token");
     setAuthToken(t);
@@ -33,7 +34,7 @@ function App() {
     <div className="app-shell">
       <NavBar />
 
-      {window.location.pathname !== "/login" && (
+      {pathname !== "/login" && (
         <div className="breadcrumbs-bar">
           <div className="container">
             <Breadcrumbs />

@@ -3,5 +3,5 @@ import { useLocalStorage } from "../hooks/useLocalStorage";
 
 export default function GuestRoute({ children }) {
   const [user] = useLocalStorage("user", null);
-  return user ? <Navigate to="/profile" replace /> : children;
+  return user ? <Navigate to="/home" replace /> : children;
 }

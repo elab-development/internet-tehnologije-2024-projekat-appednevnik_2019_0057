@@ -1,8 +1,11 @@
 import { Link, useLocation } from "react-router-dom";
 
 function getUser() {
-  try { return JSON.parse(localStorage.getItem("user") || "null"); }
-  catch { return null; }
+  try {
+    return JSON.parse(localStorage.getItem("user") || "null");
+  } catch {
+    return null;
+  }
 }
 
 export default function Breadcrumbs() {
@@ -11,12 +14,24 @@ export default function Breadcrumbs() {
   const homeHref = user ? "/home" : "/login";
 
   const ROUTE_MAP = {
-    "/home":    [{ href: homeHref, label: "Početna" }],
-    "/students":[{ href: homeHref, label: "Početna" }, { href: "/students", label: "Učenici" }],
-    "/student": [{ href: homeHref, label: "Početna" }, { href: "/student",  label: "Učenik" }],
-    "/profile": [{ href: homeHref, label: "Početna" }, { href: "/profile",  label: "Profil" }],
-    "/subjects":[{ href: homeHref, label: "Početna" }, { href: "/subjects", label: "Predmeti" }],
-    "/login":   [{ href: "/login", label: "Prijava" }],
+    "/home": [{ href: "/home", label: "Početna" }],
+    "/students": [
+      { href: "/home", label: "Početna" },
+      { href: "/students", label: "Učenici" },
+    ],
+    "/student": [
+      { href: "/home", label: "Početna" },
+      { href: "/student", label: "Učenik" },
+    ],
+    "/profile": [
+      { href: "/home", label: "Početna" },
+      { href: "/profile", label: "Profil" },
+    ],
+    "/subjects": [
+      { href: "/home", label: "Početna" },
+      { href: "/subjects", label: "Predmeti" },
+    ],
+    "/login": [{ href: "/login", label: "Prijava" }],
   };
 
   const clean = pathname.replace(/\/+$/, "") || "/";
@@ -24,11 +39,15 @@ export default function Breadcrumbs() {
   const matchKey =
     Object.keys(ROUTE_MAP)
       .sort((a, b) => b.length - a.length)
-      .find((key) => clean === key || clean.startsWith(key + "/")) || (user ? "/home" : "/login");
+      .find((key) => clean === key || clean.startsWith(key + "/")) ||
+    (user ? "/home" : "/login");
 
-  const items = ROUTE_MAP[matchKey] || [{ href: homeHref, label: "Početna" }];
+  if (matchKey === "/login") return null;
 
-  if (pathname === "/login") return null;
+  const itemsRaw = ROUTE_MAP[matchKey] || ROUTE_MAP["/home"];
+  const items = itemsRaw.map((it, idx) =>
+    idx === 0 ? { ...it, href: homeHref } : it
+  );
 
   return (
     <nav className="breadcrumbs" aria-label="Breadcrumb">
